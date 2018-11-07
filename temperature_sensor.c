@@ -14,7 +14,7 @@ void getTemperature() {
 
 
 	// put your main code here, to run repeatedly:
-	sensorInput = readAdc(4);    //read the analog sensor and store it
+	sensorInput = readLight();    //read the analog sensor and store it
 	temp = temp * 5;                 //multiply by 5V to get voltage
 	temp = (double)sensorInput / 1024;       //find percentage of input reading
 	temp = temp - 0.5;               //Subtract the offset

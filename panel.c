@@ -5,7 +5,6 @@
  *  Author: gebruiker
  */ 
 
-#define F_CPU 16E6 //-> Dit moet wel als je Visual Studio gebruikt
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdio.h>

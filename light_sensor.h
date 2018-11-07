@@ -9,7 +9,7 @@
 #ifndef LIGHT_SENSOR_H_
 #define LIGHT_SENSOR_H_
 
-const char* getLight();
+const char* getLight1();
 int getNumericLightValue();
 
 

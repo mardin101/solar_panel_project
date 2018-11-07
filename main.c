@@ -6,12 +6,8 @@
 #include <time.h>
 #include <avr/eeprom.h>
 
-#include "temperature_sensor.h"
-#include "serial.h"
-#include "light_sensor.h"
-#include "scheduler.h"
-#include "panel.h"
-#include "distance_sensor.h"
+//---------- include variables -------------//
+int panel_is_down = 0;
 
 uint8_t EEMEM DeviceName[10];
 uint8_t EEMEM TempMax;
@@ -19,35 +15,217 @@ uint8_t EEMEM TempMin;
 uint8_t EEMEM LightThreshold;
 uint8_t EEMEM Distance;
 
+const char* getLight();
+void initPanel();
+void getTemperature();
+int readLight();
+int readTemperature();
+void adc_change_channel(int channel);
+
+//------------------------------ start of include files --------------------------------------//
+//panel
+int panelUp()
+{
+	if (panel_is_down == 1) {
+		//clear red light first
+		PORTB &= ~(1 << 0);
+		int i;
+		PORTB |= 1 << 1; //set green led
+		
+		//toggle yellow led
+		for (i = 0; i < 5; i ++) {
+			PORTB ^= 1 << 2;
+			_delay_ms(1000);
+		}
+		
+		PORTB &= ~(1 << 2);
+		panel_is_down = 0;
+		
+		return 0;
+	}
+	
+	return 1;
+}
+
+int panelDown()
+{
+	if (panel_is_down == 0) {
+		//clear green light first
+		PORTB &= ~(1 << 1);
+		int i;
+		PORTB |= 1 << 0; //set red led
+		
+		//toggle yellow led
+		for (i = 0; i < 5; i ++) {
+			PORTB ^= 1 << 2;
+			_delay_ms(1000);
+		}
+		
+		PORTB &= ~(1 << 2);
+		panel_is_down = 1;
+		
+		return 0;
+	}
+	
+	return 1;
+}
+
+void initPanel()
+{
+	//first set the B port with leds
+	DDRB = 0x7;
+	PORTB = 0x7;
+	_delay_ms(200);
+	PORTB = 0x1;
+}
+
+//light
+const char* getLight() {
+	//https://stackoverflow.com/questions/1496313/returning-c-string-from-a-function
+	
+	int sensorValue = readLight()/128;
+	printf("Lichtwaarde: %i \n \r", readLight());
+}
+
+int getNumericLightValue()
+{
+	int sensorValue = readLight()/128;
+	
+	return sensorValue;
+}
+//temp
+void getTemperature() {
+	//int sensePin = A0;  //This is the Arduino Pin that will read the sensor output
+	int sensorInput;    //The variable we will use to store the sensor input
+	double temp;        //The variable we will use to store temperature in degrees.
+
+
+	// put your main code here, to run repeatedly:
+	sensorInput = readTemperature();    //read the analog sensor and store it
+	temp = sensorInput - 22;
+
+	printf("Temp       : %i \n \r", (int)temp);
+}
 
 // C-reference: http://pubs.opengroup.org/onlinepubs/9699919799/
 // Hier kun je oa. een beschrijving van de functies printf en atoi vinden.
 
 void adc_init(void)
 {
-	ADMUX = (1<<REFS0);     //select AVCC as reference
-	ADCSRA = (1<<ADEN) | 7;  //enable and prescale = 128 (16MHz/128 = 125kHz)
+	//ADMUX = (1<<REFS0) | (1 << ADLAR);     //select AVCC as reference
+	//ADCSRA = (1<<ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);  //enable and prescale = 128 (16MHz/128 = 125kHz)
+	ADMUX |= (1 << REFS0) | (1 << ADLAR);
+	//enable ADC and set pre-scaler to 128
+	ADCSRA = (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2) | (1 << ADEN);
 }
 
-int readAdc(char chan)
+int adc_read()
 {
-	ADMUX	&=	0xf0;
-	ADMUX	|=	chan;
-
-	/* This starts the conversion. */
-	ADCSRA |= _BV(ADSC);
+	
+	ADCSRA |= (1 << ADSC);
 
 	/* This is an idle loop that just wait around until the conversion
 	 * is finished.  It constantly checks ADCSRA's ADSC bit, which we just
 	 * set above, to see if it is still set.  This bit is automatically
 	 * reset (zeroed) when the conversion is ready so if we do this in
 	 * a loop the loop will just go until the conversion is ready. */
-	while ( (ADCSRA & _BV(ADSC)) );
-
+	loop_until_bit_is_clear(ADCSRA, ADSC);
 	/* Finally, we return the converted value to the calling function. */
-	return ADC;
+	return ADCH;
 }
 
+int readLight()
+{
+	if (ADMUX != 96) { //niet channel 0 - omdat alleen ADLAR en REFS0 gezet zou moeten zijn voor channel 1
+		ADMUX = 0;
+		ADMUX |= (1 << REFS0) | (1 << ADLAR);
+	} 
+	
+	return adc_read();
+}
+
+
+void init_timer()
+{
+	
+	TCCR0A = (1 << WGM00) | (1 << COM0A1);
+	TCCR0B = (1 << CS01) | (1 << CS00);
+	OCR0A = 0;
+}
+
+int readTemperature()
+{
+	ADMUX = 0;
+	ADMUX |= (1 << REFS0) | (1 << ADLAR) | (1 << MUX1) | (1 << MUX0);
+	
+	return adc_read();
+}
+
+void listen()
+{
+	char input[40];
+	
+	ser_readln(input, sizeof(input), 1);
+	
+	if(strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");	
+	} else if (strcmp(input, "get_light") == 0) {
+		printf("2 25\n\r");	
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} else if (strcmp(input, "get_temperature") == 0) {
+		printf("2 25\n\r");
+	} 
+}
+
+
+#include "serial.h"
+
+#include "scheduler.h"
+
+#include "distance_sensor.h"
 
 int main() {
 	//https://www.avrfreaks.net/forum/tut-c-using-eeprom-memory-avr-gcc?page=all
@@ -59,24 +237,19 @@ int main() {
 	
 	ser_init();
 	adc_init();
+	init_timer();
 	initPanel();
-	SCH_Init_T1();
-	SCH_Add_Task(getLight, 2, 10);
-	SCH_Add_Task(getTemperature, 2, 10);
+	//Initialize_external_interrupt;
 	
 	//panelDown();
-	panelUp();
+	//panelUp();
 	
-	while (1) {	
-		SCH_Dispatch_Tasks();
-		//getLight();
-		if (getNumericLightValue() < 7) {
-			panelDown();
-		} else {
-			panelUp();
-		}
+	while (1) {
+		getLight();
+		//_delay_ms(500);
 		//printf("%s", getLight());
 		getTemperature();
 		_delay_ms(500);
+		//listen();
 	}
 }

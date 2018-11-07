@@ -4,15 +4,9 @@
 
 distance_sensor.c
 
-light_sensor.c
-
-panel.c
-
 scheduler.c
 
 serial.c
 
 main.c
-
-temperature_sensor.c
 

@@ -30,15 +30,15 @@
     <EraseKey />
     <AsfFrameworkConfig>
       <framework-data xmlns="">
-  <options />
-  <configurations />
-  <files />
-  <documentation help="" />
-  <offline-documentation help="" />
-  <dependencies>
-    <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.40.0" />
-  </dependencies>
-</framework-data>
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.40.0" />
+        </dependencies>
+      </framework-data>
     </AsfFrameworkConfig>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -118,7 +118,7 @@
         <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
       </AvrGcc>
     </ToolchainSettings>
-    <PostBuildEvent>C:\avrdude\avrdude.exe -C "C:\avrdude\avrdude.conf" -p atmega328p -c arduino -P COM3 -U flash:w:"C:\Users\gebruiker\Documents\Atmel Studio\7.0\serial_connection\serial_connection\$(ProjectDir)Debug\$(OutputFileName).hex":i</PostBuildEvent>
+    <PostBuildEvent>C:\avrdude\avrdude.exe -C "C:\avrdude\avrdude.conf" -p atmega328p -c arduino -P COM4 -U flash:w:"C:\Users\gebruiker\Documents\Atmel Studio\7.0\serial_connection\serial_connection\$(ProjectDir)Debug\$(OutputFileName).hex":i</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="distance_sensor.c">
@@ -127,16 +127,7 @@
     <Compile Include="distance_sensor.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="light_sensor.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="light_sensor.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="panel.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="panel.h">
+    <Compile Include="main.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="scheduler.c">
@@ -152,12 +143,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="serial.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="temperature_sensor.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="temperature_sensor.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
