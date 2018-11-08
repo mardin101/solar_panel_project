@@ -69,6 +69,7 @@ void ser_writeln(char* s) {
 // Hele regel lezen
 void ser_readln(char* buf, int maxlength, uint8_t echo) {
 	int i=0;
+
 	while(1) {
 		uint8_t c = ser_receive();
 		if (echo) ser_transmit(c);
