@@ -17,9 +17,9 @@ uint16_t EEMEM TempMax;
 uint16_t EEMEM TempMin;
 uint16_t EEMEM LightThresholdMin;
 uint16_t EEMEM LightThresholdMax;
-uint16_t EEMEM Distance;
 uint8_t EEMEM FirstBoot;
 uint16_t EEMEM Mode;
+uint16_t EEMEM MaxDistance;
 
 void initPanel();
 void getTemperature();
@@ -31,18 +31,6 @@ uint16_t read_adc();
 //------------------------------ start of include files --------------------------------------//
 
 //eeprom
-const char* getDeviceName()
-{
-	uint8_t  SRAMDeviceName[10]; 
-	uint8_t SRAMFirstBoot;
-	
-	SRAMFirstBoot = eeprom_read_word(&FirstBoot);
-	
-	eeprom_read_block((void*)&SRAMDeviceName, (const void*)&DeviceName, 10);
-
-	return (const char*)SRAMDeviceName;
-}
-
 void initEEPROM()
 {
 	uint8_t SRAMFirstBoot;
@@ -57,59 +45,96 @@ void initEEPROM()
 		eeprom_write_word((uint16_t *) &TempMax, 0x50);
 		eeprom_write_word((uint16_t *) &LightThresholdMin, 0xDF);
 		eeprom_write_word((uint16_t *) &LightThresholdMax, 0xEF);
+		eeprom_write_word((uint16_t *) &LightThresholdMax, 0xEF);
+		eeprom_write_word((uint16_t *) &MaxDistance, 0x96);
 		
 		SRAMFirstBoot = 0x0;
-		//eeprom_update_byte((uint8_t*)FirstBoot, SRAMFirstBoot);
 		eeprom_write_word(&FirstBoot, SRAMFirstBoot);
 	}
 }
 
-uint16_t getWordFromEEPROM(uint16_t location)
+void setMode(uint16_t mode)
 {
-	//todo fuck off this shit
-	uint16_t SRAMvalue;
-	SRAMvalue = eeprom_read_word(&location);
-	
-	return (uint16_t)SRAMvalue;
+	eeprom_write_word((uint16_t *)&Mode, mode);
 }
 
-void setMode()
+void setTempMin(uint16_t temp)
 {
-	
-}
-
-void setTempMin()
-{
-	
+	eeprom_write_word((uint16_t *)&TempMin, temp);
 }
 
 void setTempMax(uint16_t temp)
 {
-	//todo fix this
-	eeprom_write_word((uint16_t *)&TempMax, temp));
-	
-	uint16_t SRAMtemp;
-	SRAMtemp = eeprom_read_word(&TempMax);
-	printf("nieuwe waarde: %i", SRAMtemp);
+	eeprom_write_word((uint16_t *)&TempMax, temp);
 }
 
-void setLightMin()
+void setLightMin(uint16_t light)
 {
-	
-	
+	eeprom_write_word((uint16_t *)&LightThresholdMin, light);
 }
 
-void setLightMax()
+void setLightMax(uint16_t light)
 {
-	
-	
+	eeprom_write_word((uint16_t *)&LightThresholdMin, light);
 }
 
-void setDeviceName()
+void setDeviceName(char* newName)
 {
+	int length = strlen(newName);
 	
+	if (length > 10) {
+		printf("5 name_too_long");
+	} else {
+		eeprom_write_block((const void*)newName, DeviceName, 10);
+		printf("2 \n\r");	
+	}
 }
 
+void setDistanceMax(uint16_t distance)
+{
+	eeprom_write_word((uint16_t *)&MaxDistance, distance);
+}
+
+void getDeviceName(char* string, int buffersize)
+{
+	char  SRAMDeviceName[10];
+	
+	eeprom_read_block((void*)&SRAMDeviceName, (const void*)&DeviceName, 10);
+	
+	strncpy(string, SRAMDeviceName, buffersize-1);
+	string[buffersize-1] = '\0';
+}
+
+void get_config()
+{
+	uint16_t SRAMMode;
+	uint16_t SRAMTempMax;
+	uint16_t SRAMTempMin;
+	uint16_t SRAMLightThresholdMax;
+	uint16_t SRAMLightThresholdMin;
+	uint16_t SRAMMaxDistance;
+	
+	char SRAMDeviceName[10];
+	
+	int id = 1337; //unique project identifier
+	SRAMMode = eeprom_read_word(&Mode);
+	SRAMTempMax = eeprom_read_word(&TempMax);
+	SRAMTempMin = eeprom_read_word(&TempMin);
+	SRAMLightThresholdMax = eeprom_read_word(&LightThresholdMax);
+	SRAMLightThresholdMin = eeprom_read_word(&LightThresholdMin);
+	SRAMMaxDistance = eeprom_read_word(&MaxDistance);
+	
+	getDeviceName(SRAMDeviceName, sizeof(SRAMDeviceName));
+	printf("%c", SRAMDeviceName[0]);
+	printf("2 %i,%s,%i,%i,%i,%i,%i,%i \n\r", id, SRAMDeviceName, SRAMMode, SRAMTempMin, SRAMTempMax, SRAMLightThresholdMin,SRAMLightThresholdMax, SRAMMaxDistance);
+}
+
+void getMode()
+{
+	uint16_t SRAMMode;
+	SRAMMode = eeprom_read_word(&Mode);
+	printf("2 %i");
+}
 
 void run()
 {
@@ -137,34 +162,17 @@ void run()
 	SRAMLightMax = eeprom_read_word(&LightThresholdMax);
 	SRAMLightMin = eeprom_read_word(&LightThresholdMin);
 	
-	printf("min: %i max: %i huidig: %i \n\r", SRAMLightMin, SRAMLightMax, readLight());
-	if (readLight() > SRAMLightMax) {
-		panelDown();
-	} else if(readLight() < SRAMLightMin) {
-		panelUp();
+	uint16_t isManual;
+	isManual = eeprom_read_word(&Mode);
+	if (isManual != 1) {
+		if (readLight() > SRAMLightMax) {
+			panelDown();
+		} else if(readLight() < SRAMLightMin) {
+			panelUp();
+		}	
 	}
-	
-	//int light = getLight();
-	_delay_ms(500);
 }
 
-void get_config()
-{
-	int id = 1337;
-	uint8_t modus = getWordFromEEPROM(Mode);
-	uint8_t tempMin = getWordFromEEPROM(TempMax);
-	uint8_t tempMax = getWordFromEEPROM(TempMin);
-	uint8_t lightMin = getWordFromEEPROM(LightThresholdMin);
-	uint8_t lightMax = getWordFromEEPROM(LightThresholdMax);
-	const char* deviceName = getDeviceName();
-	
-	printf("2 %i,%s,%i,%i,%i,%i,%i \n\r", id, deviceName, modus, tempMin, tempMax, lightMin,lightMax);
-}
-
-int getMode()
-{
-	
-}
 //panel
 int panelUp()
 {
@@ -291,7 +299,6 @@ uint16_t readLight()
 
 void init_timer()
 {
-	
 	TCCR0A = (1 << WGM00) | (1 << COM0A1);
 	TCCR0B = (1 << CS01) | (1 << CS00);
 	OCR0A = 0;
@@ -306,8 +313,6 @@ uint16_t readTemperature()
 	return adc_read() - 18;
 }
 void deleteEnd (char* myStr){
-
-	printf ("%s\n", myStr);
 	char *del = &myStr[strlen(myStr)];
 
 	while (del > myStr && *del != '/') {
@@ -332,10 +337,9 @@ void listen()
 	char *value;
 	
 	value = strchr(input, delimiter);
-	value++;
+	value++; //remove spacer from string
 	deleteEnd(input);
 	int newValue;
-	
 	newValue = strtol(value, NULL, 10);
 
 	if(strcmp(&input, 			"get_temperature") == 0) {
@@ -352,18 +356,18 @@ void listen()
 		panelUp();
 		printf("2 \n\r");
 	} else if (strcmp(&input, 	"set_light_threshold_minimum") == 0) {
-		setLightMin(value);
+		setLightMin(newValue);
 		printf("2 \n\r");
 	} else if (strcmp(&input, 	"set_light_threshold_maximum") == 0) {
-		setLightMax(value);
+		setLightMax(newValue);
 		printf("2 \n\r");
 	} else if (strcmp(&input, 	"set_temperature_threshold_minimum") == 0) {
-		setTempMin(value);
+		setTempMin(newValue);
 		printf("2 \n\r");
 	} else if (strcmp(&input, 	"set_temperature_threshold_maximum") == 0) {
-		setTempMax(value);
+		setTempMax(newValue);
 	} else if (strcmp(&input, 	"set_max_distance") == 0) {
-		//setDistancceMax(value);
+		setDistanceMax(newValue);
 		printf("2 \n\r");
 	} else if (strcmp(&input, 	"handshake") == 0) {
 		get_config();
@@ -377,7 +381,7 @@ void listen()
 		setDeviceName(value);
 		printf("2 \n\r");
 	} else {
-		printf("5 wrong_arguments");
+		printf("4 unkown_command \n\r");
 	}
 }
 
