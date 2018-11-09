@@ -64,8 +64,11 @@ void Send_signal()
 
 void Initialize_external_interrupt()
 {
-	MCUCR |= (1 << ISC10); //Any logical change on INT1
-	EIMSK  |= (1 << INT1); //Enable INT1
+	EICRA |= (1 << ISC00);    // set INT0 to trigger on ANY logic change
+	EIMSK |= (1 << INT0);     // Turns on INT0
+	sei();
+	//MCUCR |= (1 << ISC10); //Any logical change on INT1
+	//EICRA  |= (1 << INT1); //Enable INT1
 }
 
 void Initialize_timer0()

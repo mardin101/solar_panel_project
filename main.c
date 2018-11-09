@@ -28,6 +28,11 @@ uint16_t readLight();
 uint16_t readTemperature();
 uint16_t read_adc();
 
+void ser_printf(char* string)
+{
+	
+	printf("%s\0", string);
+}
 //------------------------------ start of include files --------------------------------------//
 
 //eeprom
@@ -83,10 +88,10 @@ void setDeviceName(char* newName)
 	int length = strlen(newName);
 	
 	if (length > 10) {
-		printf("5 name_too_long");
+		printf("5 name_too_long \n\r\0");
 	} else {
 		eeprom_write_block((const void*)newName, DeviceName, 10);
-		printf("2 \n\r");	
+		printf("2 \n\r\0");	
 	}
 }
 
@@ -126,14 +131,14 @@ void get_config()
 	
 	getDeviceName(SRAMDeviceName, sizeof(SRAMDeviceName));
 	printf("%c", SRAMDeviceName[0]);
-	printf("2 %i,%s,%i,%i,%i,%i,%i,%i \n\r", id, SRAMDeviceName, SRAMMode, SRAMTempMin, SRAMTempMax, SRAMLightThresholdMin,SRAMLightThresholdMax, SRAMMaxDistance);
+	printf("2 %i,%s,%i,%i,%i,%i,%i,%i \n\r\0", id, SRAMDeviceName, SRAMMode, SRAMTempMin, SRAMTempMax, SRAMLightThresholdMin,SRAMLightThresholdMax, SRAMMaxDistance);
 }
 
 void getMode()
 {
 	uint16_t SRAMMode;
 	SRAMMode = eeprom_read_word(&Mode);
-	printf("2 %i");
+	printf("2 %i\n\r\0");
 }
 
 void run()
@@ -146,7 +151,7 @@ void run()
 	SRAMTempMin = eeprom_read_word(&TempMin);
 	SRAMTempMax = eeprom_read_word(&TempMax);
 	
-	printf("huidig: %i, eeprom: %i \n\r", temp, SRAMTempMax);
+	printf("huidig: %i, eeprom: %i \n\r\0", temp, SRAMTempMax);
 	
 	//Check for climate change
 	if (temp > SRAMTempMax) {
@@ -176,7 +181,6 @@ void run()
 //panel
 int panelUp()
 {
-	printf("in up fucntie\n\r");
 	if (panel_is_down == 1) {
 		//clear red light first
 		PORTB &= ~(1 << 0);
@@ -200,7 +204,6 @@ int panelUp()
 
 int panelDown()
 {
-	printf("in down fucntie\n\r");
 	if (panel_is_down == 0) {
 		//clear green light first
 		PORTB &= ~(1 << 1);
@@ -236,7 +239,7 @@ void getLight() {
 	//https://stackoverflow.com/questions/1496313/returning-c-string-from-a-function
 	
 	int sensorValue = readLight()/128;
-	printf("Lichtwaarde: %i \n \r", readLight());
+	printf("Lichtwaarde: %i \n\r\0", readLight());
 }
 
 int getNumericLightValue()
@@ -256,7 +259,7 @@ void getTemperature() {
 	sensorInput = readTemperature();    //read the analog sensor and store it
 	temp = sensorInput - 22;
 
-	printf("Temp       : %i \n \r", (int)sensorInput);
+	printf("Temp       : %i \n\r\0", (int)sensorInput);
 }
 
 // C-reference: http://pubs.opengroup.org/onlinepubs/9699919799/
@@ -351,37 +354,38 @@ void listen()
 		//printf("2 %i\n\r", distance);
 	} else if (strcmp(&input, 	"panel_out") == 0) {
 		panelDown();
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"panel_in") == 0) {
 		panelUp();
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"set_light_threshold_minimum") == 0) {
 		setLightMin(newValue);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"set_light_threshold_maximum") == 0) {
 		setLightMax(newValue);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"set_temperature_threshold_minimum") == 0) {
 		setTempMin(newValue);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"set_temperature_threshold_maximum") == 0) {
 		setTempMax(newValue);
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"set_max_distance") == 0) {
 		setDistanceMax(newValue);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"handshake") == 0) {
 		get_config();
 	} else if (strcmp(&input, 	"set_mode_automatic") == 0) {
 		setMode(0);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, 	"set_mode_manual") == 0) {
 		setMode(1);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else if (strcmp(&input, "set_device_name") == 0) {
 		setDeviceName(value);
-		printf("2 \n\r");
+		printf("2 \n\r\0");
 	} else {
-		printf("4 unkown_command \n\r");
+		printf("4 unkown_command \n\r\0");
 	}
 }
 
@@ -403,17 +407,22 @@ int main() {
 	initPanel();
 	initEEPROM();
 	
-	SCH_Init_T1();
+	//SCH_Init_T1();
 	//SCH_Add_Task(listen, 10, 20);
 	//SCH_Add_Task(panelDown, 200, 300);
 	//SCH_Add_Task(panelUp, 200, 300);
-	SCH_Add_Task(run, 10, 10);
-	SCH_Start();
+	//SCH_Add_Task(run, 10, 10);
+	//SCH_Start();
+	
+	//Initialize_timer0();
+	//Initialize_external_interrupt();
 	
 	//panelDown();
 	//panelUp();
 	
 	while (1) {
+		//printf("%i\0", distance_cm);
+		//Send_signal();
 		//SCH_Dispatch_Tasks();
 		listen();
 		//panelDown();
