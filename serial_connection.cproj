@@ -127,13 +127,31 @@
     <Compile Include="distance_sensor.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="eeprom.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="panel.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="panel.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="scheduler.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="scheduler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sensors.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sensors.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="serial.c">
@@ -143,6 +161,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="serial.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="variables.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

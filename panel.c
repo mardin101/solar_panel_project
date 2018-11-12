@@ -1,21 +1,20 @@
-/*
- * panel.c
- *
- * Created: 2-11-2018 12:19:24
- *  Author: gebruiker
- */ 
-
 #include <avr/io.h>
+#define F_CPU 16E6 //-> Dit moet wel als je Visual Studio gebruikt
 #include <util/delay.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <avr/eeprom.h>
+#include <inttypes.h>
+#include <string.h>
 
 int panel_is_down = 0;
-
+/************************************************************************/
+/* Pulls the panel up
+/************************************************************************/
 int panelUp()
 {
-	if (panel_is_down) {
+	if (panel_is_down == 1) {
 		//clear red light first
 		PORTB &= ~(1 << 0);
 		int i;
@@ -36,9 +35,12 @@ int panelUp()
 	return 1;
 }
 
+/************************************************************************/
+/* Lets the panel go down
+/************************************************************************/
 int panelDown()
 {
-	if (!panel_is_down) {
+	if (panel_is_down == 0) {
 		//clear green light first
 		PORTB &= ~(1 << 1);
 		int i;
@@ -59,6 +61,10 @@ int panelDown()
 	return 1;
 }
 
+/************************************************************************/
+/* Initialises the panel. Leds will  blink foor 200 ms, then the red 
+led lights indicating the panel is up
+/************************************************************************/
 void initPanel()
 {
 	//first set the B port with leds

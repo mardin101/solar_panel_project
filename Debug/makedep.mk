@@ -4,7 +4,13 @@
 
 distance_sensor.c
 
+eeprom.c
+
+panel.c
+
 scheduler.c
+
+sensors.c
 
 serial.c
 
