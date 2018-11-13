@@ -18,4 +18,10 @@ extern uint8_t EEMEM FirstBoot;
 extern uint16_t EEMEM Mode;
 extern uint16_t EEMEM MaxDistance;
 
+extern unsigned char working;
+extern unsigned char rising_edge;
+extern uint16_t timer_value;
+extern int distance_cm;
+extern uint8_t error;
+
 #endif /* VARIABLES_H_ */

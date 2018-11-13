@@ -88,7 +88,7 @@ void setDeviceName(char* newName)
 		printf("5:name_too_long \r");
 	} else {
 		eeprom_write_block((const void*)newName, DeviceName, 10);
-		printf("2\r\n");	
+		printf("2:\r\n");	
 	}
 }
 
@@ -137,7 +137,7 @@ void get_config()
 	
 	getDeviceName(SRAMDeviceName, sizeof(SRAMDeviceName));
 
-	printf("2:%i,%s,%i,%i,%i,%i,%i,%i \r\n", id, SRAMDeviceName, SRAMMode, SRAMTempMin, SRAMTempMax, SRAMLightThresholdMin,SRAMLightThresholdMax, SRAMMaxDistance);
+	printf("2:%i,%s,%i,%i,%i,%i,%i,%i\r\n", id, SRAMDeviceName, SRAMMode, SRAMTempMin, SRAMTempMax, SRAMLightThresholdMin,SRAMLightThresholdMax, SRAMMaxDistance);
 }
 
 /************************************************************************/

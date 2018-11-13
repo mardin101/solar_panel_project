@@ -118,7 +118,7 @@
         <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
       </AvrGcc>
     </ToolchainSettings>
-    <PostBuildEvent>C:\avrdude\avrdude.exe -C "C:\avrdude\avrdude.conf" -p atmega328p -c arduino -P COM3 -U flash:w:"C:\Users\gebruiker\Documents\Atmel Studio\7.0\serial_connection\serial_connection\$(ProjectDir)Debug\$(OutputFileName).hex":i</PostBuildEvent>
+    <PostBuildEvent>C:\avrdude\avrdude.exe -C "C:\avrdude\avrdude.conf" -p atmega328p -c arduino -P COM5 -U flash:w:"C:\Users\gebruiker\Documents\Atmel Studio\7.0\serial_connection\serial_connection\$(ProjectDir)Debug\$(OutputFileName).hex":i</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="distance_sensor.c">

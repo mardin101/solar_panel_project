@@ -7,6 +7,7 @@
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <string.h>
+#include "variables.h"
 
 void adc_init(void)
 {
@@ -53,6 +54,11 @@ void getTemperature() {
 	sensorInput = readTemperature();    //read the analog sensor and store it
 
 	printf("2:%i\r\n", (int)sensorInput);
+}
+
+void getDistance()
+{
+	printf("2:%i\r\n", (int)distance_cm);
 }
 
 

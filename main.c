@@ -7,6 +7,7 @@
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <string.h>
+#include <avr/interrupt.h>
 
 #include "variables.h"
 #include "serial.h"
@@ -26,8 +27,9 @@ uint8_t EEMEM FirstBoot;
 uint16_t EEMEM Mode;
 uint16_t EEMEM MaxDistance;
 
+int dist, d[4], c=0, t=0;
+
 void run();
-void init_timer();
 void deleteEnd (char* str);
 void listen();
 int main();
@@ -47,7 +49,6 @@ void run()
 	SRAMTempMin = eeprom_read_word(&TempMin);
 	SRAMTempMax = eeprom_read_word(&TempMax);
 	
-	
 	//Check for climate change
 	if (temp > SRAMTempMax) {
 		panelUp();
@@ -64,22 +65,17 @@ void run()
 	
 	uint16_t isManual;
 	isManual = eeprom_read_word(&Mode);
+	
+	int light = readLight();
+	
 	if (isManual != 1) {
-		if (readLight() > SRAMLightMax) {
+		if (light > SRAMLightMax) {
 			panelDown();
-		} else if(readLight() < SRAMLightMin) {
+		} else if(light < SRAMLightMin) {
 			panelUp();
 		}	
 	}
 }
-
-void init_timer()
-{
-	TCCR0A = (1 << WGM00) | (1 << COM0A1);
-	TCCR0B = (1 << CS01) | (1 << CS00);
-	OCR0A = 0;
-}
-
 
 /************************************************************************/
 /* Deletes the end of a string after the delimiter
@@ -87,7 +83,7 @@ void init_timer()
 void deleteEnd (char* str) {
 	char *del = &str[strlen(str)];
 
-	while (del > str) {
+	while (del > str && *del != '/') {
 		del--;
 		
 		if (*del== ':') {
@@ -105,66 +101,72 @@ void deleteEnd (char* str) {
 void listen()
 {
 	char input[40];
+	char *withoutSpace;
 	
 	if (UCSR0A & (1 << RXC0)) {
 		ser_readln(input, sizeof(input), 0);
-	
+		
 		const char delimiter = ':';
 		char *value;
+		
+		if (input[0] == '\n') {
+			withoutSpace = input + 1;	
+		} else {
+			withoutSpace = input;	
+		}
 		
 		value = strchr(input, delimiter);
 		value++; //remove spacer from string
 		deleteEnd(input);
+		
 		int newValue;
 		newValue = strtol(value, NULL, 10);
-
-		if(strcmp(&input, 			"get_temperature") == 0) {
+		
+		if(strcmp(input, 			"get_temperature") == 0) {
 			getTemperature();
-		} else if (strcmp(&input, 	"get_light") == 0) {
+		} else if (strcmp(withoutSpace, 	"get_light") == 0) {
 			getLight();
-		} else if (strcmp(&input, 	"get_distance") == 0) {
-			//distance = getDistance();
-			//printf("2 %i\n\r", distance);
-		} else if (strcmp(&input, 	"panel_out") == 0) {
+		} else if (strcmp(withoutSpace, 	"get_distance") == 0) {
+			getDistance();
+		} else if (strcmp(withoutSpace, 	"panel_out") == 0) {
 			printf("2:\r\n");
 			panelDown();
-		} else if (strcmp(&input, 	"panel_in") == 0) {
+		} else if (strcmp(withoutSpace, 	"panel_in") == 0) {
 			printf("2:\r\n");
 			panelUp();
-		} else if (strcmp(&input, 	"set_light_threshold_minimum") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_light_threshold_minimum") == 0) {
 			setLightMin(newValue);
 			printf("2:\r\n");
-		} else if (strcmp(&input, 	"set_light_threshold_maximum") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_light_threshold_maximum") == 0) {
 			setLightMax(newValue);
 			printf("2:\r\n");
-		} else if (strcmp(&input, 	"set_temperature_threshold_minimum") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_temperature_threshold_minimum") == 0) {
 			setTempMin(newValue);
 			printf("2:\r\n");
-		} else if (strcmp(&input, 	"set_temperature_threshold_maximum") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_temperature_threshold_maximum") == 0) {
 			setTempMax(newValue);
 			printf("2:\r\n");
-		} else if (strcmp(&input, 	"set_max_distance") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_max_distance") == 0) {
 			setDistanceMax(newValue);
 			printf("2:\r\n");
-		} else if (strcmp(&input, 	"handshake") == 0) {
+		} else if (strcmp(input, 	"handshake") == 0) {
 			get_config();
-		} else if (strcmp(&input, 	"set_mode_automatic") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_mode_automatic") == 0) {
 			setMode(0);
 			printf("2:\r\n");
-		} else if (strcmp(&input, 	"set_mode_manual") == 0) {
+		} else if (strcmp(withoutSpace, 	"set_mode_manual") == 0) {
 			setMode(1);
 			printf("2:\r\n");
-		} else if (strcmp(&input, "set_device_name") == 0) {
+		} else if (strcmp(withoutSpace, "set_device_name") == 0) {
 			setDeviceName(value);
 			printf("2:\r\n");
 		} else {
-			printf("4:unkown_command \r");
+			printf("4:unknown_command\r\n", input);
 		}
+		
+		UCSR0A &=~ (1 << RXC0);
 	}
 }
-
-
-
 
 
 /************************************************************************/
@@ -173,17 +175,19 @@ void listen()
 int main() {
 	ser_init();
 	adc_init();
-	init_timer();
+	//init_timer();
 	initPanel();
 	initEEPROM();
+	
 	
 	//SCH_Init_T1();
 	//SCH_Add_Task(listen, 10, 20);
 	
 	//SCH_Start();
 	
-	//Initialize_timer0();
-	//Initialize_external_interrupt();
+	Initialize_timer0();
+	Initialize_external_interrupt();
+	Initialize_Ports();
 	//panelUp();
 	
 	while (1) {
@@ -191,5 +195,6 @@ int main() {
 		//SCH_Dispatch_Tasks();
 		listen();
 		run();
+		_delay_ms(1);
 	}
 }

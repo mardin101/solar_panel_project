@@ -7,6 +7,7 @@ uint16_t readLight();
 uint16_t adc_read();
 void adc_init(void);
 int readTemperature();
+void getDistance();
 
 
 #endif /* SENSORS_H_ */

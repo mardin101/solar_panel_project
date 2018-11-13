@@ -12,6 +12,7 @@
 void Send_signal(void);
 void Initialize_external_interrupt (void);
 void Initialize_timer0 (void);
+void Initialize_Ports(void);
 
 unsigned char working;
 unsigned char rising_edge;

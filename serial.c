@@ -75,9 +75,10 @@ void ser_readln(char* buf, int maxlength, uint8_t echo) {
 		if (echo) ser_transmit(c);
 		if (c=='\r') {
 			if (echo) ser_transmit('\n');
+
 			break; // ENTER ontvangen
 		}
-		if (i<maxlength-1) {
+		if (i<maxlength-1 && c != '\n' && c != '\r') {
 			buf[i++]=c;
 		}
 	}

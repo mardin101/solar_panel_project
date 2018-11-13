@@ -7,6 +7,7 @@
 #include <avr/eeprom.h>
 #include <inttypes.h>
 #include <string.h>
+#include "variables.h"
 
 int panel_is_down = 0;
 /************************************************************************/
@@ -18,12 +19,16 @@ int panelUp()
 		//clear red light first
 		PORTB &= ~(1 << 0);
 		int i;
-		PORTB |= 1 << 1; //set green led
+		PORTB |= (1 << 1); //set green led
 		
-		//toggle yellow led
-		for (i = 0; i < 5; i ++) {
-			PORTB ^= 1 << 2;
+		uint16_t SRAMMaxDistance = eeprom_read_word(&MaxDistance);
+		
+		//printf("%i", distance_cm);
+		while (distance_cm > SRAMMaxDistance) {
+			PORTB ^= (1 << 2);
+			Send_signal();
 			_delay_ms(1000);
+			//printf("%i \r\n", distance_cm);
 		}
 		
 		PORTB &= ~(1 << 2);
@@ -41,21 +46,28 @@ int panelUp()
 int panelDown()
 {
 	if (panel_is_down == 0) {
+		//printf("We gaan panel naar beneden doen\n\r");
+		//printf("distance is nu: %i \n\r", distance_cm);
 		//clear green light first
 		PORTB &= ~(1 << 1);
 		int i;
-		PORTB |= 1 << 0; //set red led
+		PORTB |= (1 << 0); //set red led
 		
 		//toggle yellow led
-		for (i = 0; i < 5; i ++) {
-			PORTB ^= 1 << 2;
+		uint16_t SRAMMaxDistance = eeprom_read_word(&MaxDistance);
+		while (distance_cm < SRAMMaxDistance) {
+			PORTB ^= (1 << 2);
+			Send_signal();
 			_delay_ms(1000);
+			//printf("%i \r\n", distance_cm);
 		}
 		
 		PORTB &= ~(1 << 2);
 		panel_is_down = 1;
 		
 		return 0;
+	} else {
+		//printf("Panel was al naar beneden\n\r");
 	}
 	
 	return 1;
@@ -71,5 +83,5 @@ void initPanel()
 	DDRB = 0x7;
 	PORTB = 0x7;
 	_delay_ms(200);
-	PORTB = 0x1;
+	PORTB = 0x2;
 }
